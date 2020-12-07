@@ -43,41 +43,41 @@ function plot_median_terminals(df::DataFrame, ids)
 	scatter!(xs, ys, zs, markersize=200)
 end
 
-function plot_neurons(skeletons, ids)
+
+
+
+"""
+Plot Neuron Skeletons
+"""
+function plot_neurons(skeletons; color=RGB(0f0, 0f0, 0f0))
+	ids = unique(skeletons.bodyId)
+	plot_neurons(skeletons, ids, color=color)
+end
+
+
+function plot_neurons(skeletons, ids; color)
 	scene = Scene(show_axis=false)
-	colors = range(HSL(0,0.5,0.5), HSL(360,0.5,0.5), length=length(ids))
-	for (i, id) in enumerate(ids)
-		linesegments!(scene, to_segments(get_neuron(skeletons, id)), color=colors[i], linewidth=2)
-	end
-	# for our high dpi screen...
-	#cameracontrols(scene).rotationspeed[] = 0.0002f0
+	plot_neurons!(scene, skeletons, ids, color)
 	return scene
 end
 
-function plot_neurons_color(skeletons, ids, colors)
-	scene = Scene(show_axis=false)
-	for (i, id) in enumerate(ids)
-		linesegments!(scene, to_segments(get_neuron(skeletons, id)), color=RGBA(colors[i],0.5), linewidth=2, transparency=true, shininess=0f0)
-	end
-	# for our high dpi screen...
-	#cameracontrols(scene).rotationspeed[] = 0.0002f0
-	return scene	
-end
 
-function plot_neurons_1color(skeletons, ids, color)
-	scene = Scene(show_axis=false)
-	plot_neurons_1color!(scene, skeletons, ids, color)
+function plot_neurons!(scene, skeletons, ids, color::Vector{<:Colorant})
+	for (i, id) in enumerate(ids)
+		linesegments!(scene, to_segments(get_neuron(skeletons, id)), color=color[i], linewidth=2, transparency=true, shininess=0f0)
+	end
 	return scene
 end
 
-function plot_neurons_1color!(scene, skeletons, ids, color)
+function plot_neurons!(scene, skeletons, ids, color::Colorant)
+
 	for (i, id) in enumerate(ids)
 		linesegments!(scene, to_segments(get_neuron(skeletons, id)), color=color, linewidth=2, transparency=true, shininess=0f0)
 	end
-	# for our high dpi screen...
-	#cameracontrols(scene).rotationspeed[] = 0.0002f0
 	return scene
 end
+
+
 
 function plot_retinotopicity(sk, ids)
 
@@ -480,3 +480,13 @@ function find_common_connections(pre_ids, post_ids, df)
 end
 
 get_neuron(df, id) = df[df.bodyId .== id, :];
+
+
+function weight_transparency(pre_ids, all_ids, df)
+	upstream_weights = total_connection_strength(all_ids, pre_ids, df)
+	colors = Vector{HSLA}(undef, length(all_ids));
+	normalised_weights = normalise(upstream_weights)
+	for i in 1:length(unique_up)
+	   colors[i] = HSLA(236, .08, .23, normalised_weights[i])
+	end
+end

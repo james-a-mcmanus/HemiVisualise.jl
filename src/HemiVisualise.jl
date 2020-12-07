@@ -10,9 +10,6 @@ function __init__()
 	copy!(NEU, pyimport("NeuprintInterface"))
 end
 
-# import the neuprint python scripts into the module.
-#NEU = pyimport("NeuprintInterface")
-
 include("FetchNeurons.jl")
 include("PlotNeurons.jl")
 

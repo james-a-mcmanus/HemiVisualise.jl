@@ -1,8 +1,13 @@
-from neuprint import Client, NeuronCriteria, fetch_neurons
+from neuprint import Client, NeuronCriteria, fetch_neurons, fetch_adjacencies, merge_neuron_properties
 import pandas as pd
 import numpy as np
+import json
 
-TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImphbWNtYW51czFAc2hlZmZpZWxkLmFjLnVrIiwibGV2ZWwiOiJub2F1dGgiLCJpbWFnZS11cmwiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vLV9VbXJGaVZlRXZVL0FBQUFBQUFBQUFJL0FBQUFBQUFBQUFBL0FNWnV1Y21mSWU5V3ZScm9uQy1ZUUU0ZGRrOFhWZklUdGcvcGhvdG8uanBnP3N6PTUwP3N6PTUwIiwiZXhwIjoxNzcyNDgyNjIwfQ.18JDKwt_yLehRIESw-2PZHbt6Ml_7xiUH-6d6EgsY1E'
+with open("credentials.json") as f:
+	credentials = json.load(f)
+
+
+TOKEN = credentials["TOKEN"]
 CLIENT = Client('neuprint.janelia.org', dataset='hemibrain:v1.1', token=TOKEN)
 
 
@@ -26,4 +31,18 @@ def get_skeletons(bodyIds):
 	#skeletons = pd.concat(skeletons, ignore_index=True)
 	#skeletons.head()
 	#print(exceptions)
-	return skeletons
+	return skeleton
+
+
+def get_upstream(bodyIds):
+	neuron_df, conn_df = fetch_adjacencies(None, bodyIds)
+	conn_df = merge_neuron_properties(neuron_df, conn_df, ['type', 'instance'])
+	conn_df.replace(to_replace=[None], value="Unknown", inplace=True)
+	return conn_df
+
+
+def get_downstream(bodyIds):
+	neuron_df, conn_df = fetch_adjacencies(bodyIds, None)
+	conn_df = merge_neuron_properties(neuron_df, conn_df, ['type', 'instance'])
+	conn_df.replace(to_replace=[None], value="Unknown", inplace=True)
+	return conn_df

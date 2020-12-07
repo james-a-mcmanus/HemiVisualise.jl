@@ -56,7 +56,7 @@ criterion(c::Int) = NEU.NeuronCriteria(bodyId=c)
 function pd_to_df(df_pd)
     df= DataFrame()
 	for col in df_pd.columns
-		df[!, col] = convert_column(getproperty(df_pd,col))
+		df[:, col] = convert_column(getproperty(df_pd,col))
 	end
     df
 end
@@ -66,7 +66,7 @@ function convert_column(column)
 	coltype = julia_equivalent(column.dtype)
 	out = Vector{coltype}(undef, length(column)) # bad practise, but assume that the type is the same for the whole column.
 	for i = 1:length(column)
-		out[i] = convert(coltype, column[i])
+		out[i] = convert(coltype, column.iloc[i])
 	end
 	return out
 end
@@ -85,6 +85,16 @@ function fetch_skeletons(ids)
 	end
 
 	return out
+end
+
+function upstream_neurons(id_list)
+	conn_df = NEU.get_upstream(id_list)
+	return pd_to_df(conn_df)
+end
+
+function downstream_neurons(id_list)
+	conn_df = NEU.get_downstream(id_list)
+	return pd_to_df(conn_df)
 end
 
 function julia_equivalent(pytype)
