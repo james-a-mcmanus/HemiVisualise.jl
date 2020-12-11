@@ -71,7 +71,7 @@ function convert_column(column)
 	return out
 end
 
-function fetch_skeletons(ids)
+function get_skeletons(ids)
 
 	out = DataFrame(bodyId=Int[], x=Float64[], y=Float64[], z=Float64[], radius=Float64[], link=Int[])
 

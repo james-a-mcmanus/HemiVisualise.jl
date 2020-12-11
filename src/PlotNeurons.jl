@@ -93,6 +93,7 @@ function plot_upstream!(scene, connection_df, skeletons; base_color=RGB(.2,.2,.2
 	return scene
 end
 
+
 function plot_downstream(connection_df, skeletons; base_color=RGB(.2, .2, .2))
 	scene = Scene(show_axis=false)
 	plot_downstream!(scene, connection_df, skeletons, base_color=base_color)
@@ -166,7 +167,6 @@ end
 
 
 
-
 """
 Neuron Analysis
 """
@@ -188,9 +188,12 @@ function to_segments(x,y,z,links)
     return segments
 end
 
+
 xyz_links(df) = return(df.x, df.y, df.z, df.link)
 
+
 to_segments(df::DataFrame) = to_segments(xyz_links(df)...)
+
 
 function find_terminals(row_ids, links)
 	terminal_ids = Int[]
@@ -199,8 +202,8 @@ function find_terminals(row_ids, links)
 	end
 	return terminal_ids
 end
-
 find_terminals(df::DataFrame) = find_terminals(df.rowId, df.link)
+
 
 function terminal_locations(df::DataFrame)
 
@@ -209,11 +212,13 @@ function terminal_locations(df::DataFrame)
 	return terminal_rows.x, terminal_rows.y, terminal_rows.z
 end
 
+
 function furthest_terminal(x,y,z, furthest_x, furthest_y, furthest_z)
 
 	distances = distance_3d(x,y,z, furthest_x, furthest_y, furthest_z)
 	return argmax(distances)
 end
+
 
 function distance_3d(x1,y1,z1,x2,y2,z2)
 	
@@ -224,8 +229,10 @@ function distance_3d(x1,y1,z1,x2,y2,z2)
 	distances = sqrt.(δx .^ 2 + δy .^2 + δz .^2)
 end
 
+
 distance(p1::Point{2,<:Real}, p2::Point{2,<:Real}) = sqrt.( (p1[1] - p2[1])^2 + (p1[2] - p1[2])^2 )
 distance(p1::Point{3,<:Real}, p2::Point{3,<:Real}) = sqrt.( (p1[1] - p2[1])^2 + (p1[2] - p1[2])^2 + (p1[3] - p2[3])^2 )
+
 
 function median_furthest_points(df::DataFrame, ids)
 
@@ -244,8 +251,10 @@ function median_furthest_points(df::DataFrame, ids)
 	return furthest_points, median_points
 end
 
+
 get_dimensions_geo(point_array, dims) = [GeometricalPredicates.Point(p[dims]...) for p in point_array]
 get_dimensions(p_array,n) = [pnt[n] for pnt in p_array]
+
 
 function nearest_neighbours(points, n)
 
@@ -278,6 +287,7 @@ function nearest_neighbour(point, other_points, n)
 	return nearest_ids, distances
 end
 
+
 function common_neighbours(neighbours1, neighbours2)
 
 	common_count = Vector{Int}(undef, size(neighbours1,1))
@@ -290,6 +300,7 @@ function common_neighbours(neighbours1, neighbours2)
 	return common_count
 end
 
+
 function common_elements(a, b)
 
 	commons = Vector{Bool}(undef, length(a))
@@ -299,12 +310,12 @@ function common_elements(a, b)
 	return commons
 end 
 
+
 function calculate_retinotopicity(df::DataFrame, ids; breadth=5)
 	
 	furthest_points, median_points = median_furthest_points(df, ids)
 	return calculate_retinotopicity(furthest_points, median_points, breadth=breadth)
 end
-
 function calculate_retinotopicity(furthest_points, median_points; breadth=5)
 	
 	furthest_neighbours, _ = nearest_neighbours(furthest_points, breadth)
@@ -312,10 +323,6 @@ function calculate_retinotopicity(furthest_points, median_points; breadth=5)
 
 	return common_neighbours(furthest_neighbours, median_neighours)
 end
-
-
-
-
 
 
 """

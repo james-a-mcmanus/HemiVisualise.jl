@@ -1,7 +1,30 @@
 __precompile__() # this module is safe to precompile
 module HemiVisualise
 
-using CSV, DataFrames, PyCall, AbstractPlotting, Colors, Makie, Infiltrator
+export 
+	NeuronType,
+	InputROI,
+	OutputROI,
+	BodyROI,
+	StringID,
+	IntID,
+	ArrayID,
+	get_neurons,
+	criterion,
+	get_ids,
+	get_skeletons,
+	upstream_neurons,
+	downstream_neurons,
+	plot_neurons, plot_neurons!,
+	plot_upstream, plot_upstream!,
+	plot_downstream, plot_downstream!,
+	spinning_camera,
+	save_spinning_camera,
+
+
+
+
+using CSV, DataFrames, PyCall, AbstractPlotting, Colors, Makie
 
 const NEU = PyNULL()
 
