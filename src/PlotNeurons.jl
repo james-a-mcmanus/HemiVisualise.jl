@@ -53,22 +53,17 @@ function plot_neurons(skeletons; color=RGB(0f0, 0f0, 0f0))
 	ids = unique(skeletons.bodyId)
 	plot_neurons(skeletons, ids, color=color)
 end
-
-
-function plot_neurons(skeletons, ids; color)
+function plot_neurons(skeletons, ids; color=RGB(0f0, 0f0, 0f0))
 	scene = Scene(show_axis=false)
 	plot_neurons!(scene, skeletons, ids, color)
 	return scene
 end
-
-
 function plot_neurons!(scene, skeletons, ids, color::Vector{<:Colorant})
 	for (i, id) in enumerate(ids)
 		linesegments!(scene, to_segments(get_neuron(skeletons, id)), color=color[i], linewidth=2, transparency=true, shininess=0f0)
 	end
 	return scene
 end
-
 function plot_neurons!(scene, skeletons, ids, color::Colorant)
 
 	for (i, id) in enumerate(ids)
@@ -77,6 +72,45 @@ function plot_neurons!(scene, skeletons, ids, color::Colorant)
 	return scene
 end
 
+
+function plot_upstream(connection_df, skeletons; base_color=RGB(.2,.2,.2))
+
+	scene = Scene(show_axis=false)
+	plot_upstream!(scene, connection_df, skeletons, base_color=base_color)
+	return scene
+end
+function plot_upstream!(scene, connection_df, skeletons; base_color=RGB(.2,.2,.2))
+
+	upstream_ids = unique(connection_df.bodyId_pre)
+	weights = pre_strength(connection_df)
+	weights = normalise(weights)
+	colors = Vector{HSLA}(undef, length(upstream_ids));
+
+	for i in 1:length(upstream_ids)
+	   colors[i] = RGBA(base_color, weights[i])
+	end
+	plot_neurons!(scene, skeletons, upstream_ids, colors)
+	return scene
+end
+
+function plot_downstream(connection_df, skeletons; base_color=RGB(.2, .2, .2))
+	scene = Scene(show_axis=false)
+	plot_downstream!(scene, connection_df, skeletons, base_color=base_color)
+	return scene
+end
+function plot_downstream!(scene, connection_df, skeletons; base_color=RGB(.2,.2,.2))
+	
+	downstream_ids = unique(connection_df.bodyId_post)
+	weights = post_strength(connection_df)
+	weights = normalise(weights)
+	colors = Vector{HSLA}(undef, length(downstream_ids));
+
+	for i in 1:length(downstream_ids)
+	   colors[i] = RGBA(base_color, weights[i])
+	end
+	plot_neurons!(scene, skeletons, downstream_ids, colors)
+	return scene
+end
 
 
 function plot_retinotopicity(sk, ids)
@@ -96,6 +130,7 @@ function plot_retinotopicity(sk, ids)
 	return p
 end
 
+
 function plot_arrows!()
 
 	arrows!([0],[0],[0],[10_000],[0],[0], linewidth=2, arrowsize=1000, arrowcolor=:blue, linecolor=:blue)
@@ -105,6 +140,7 @@ function plot_arrows!()
 	#text!("Ventral",textsize = 1000.0, position = (1000, 0, -5000), color=:green)
 	#text!("Medial",textsize = 1000.0, position = (1000, 1000, 0), color=:blue)
 end
+
 
 function spinning_camera(s, time_seconds)
 	s.center = false
@@ -116,6 +152,7 @@ function spinning_camera(s, time_seconds)
 	end
 end
 
+
 function save_spinning_camera(s, time_seconds, fname)
 	s.center = false
 	spinning_time = [1:time_seconds;]
@@ -126,8 +163,6 @@ function save_spinning_camera(s, time_seconds, fname)
        #update_cam!(s) # disabling stops the camera reset.
    end
 end
-
-
 
 
 
@@ -439,6 +474,30 @@ function total_connection_strength(from_neurons, to_neurons, connection_df)
 
 	end
 	return weights
+end
+
+function pre_strength(connection_df)
+
+	pre_ids = unique(connection_df.bodyId_pre)
+	post_ids = unique(connection_df.bodyId_post)
+
+	weights = zeros(Int, length(pre_ids))
+	for (i, pre_neuron) in enumerate(pre_ids)
+		weights[i] = sum(connection_df[connection_df.bodyId_pre .== pre_neuron,:].weight)
+	end
+	return weights
+end
+
+function post_strength(connection_df)
+
+	pre_ids = unique(connection_df.bodyId_pre)
+	post_ids = unique(connection_df.bodyId_post)
+
+	weights = zeros(Int, length(post_ids))
+	for (i, post_neuron) in enumerate(post_ids)
+		weights[i] = sum(connection_df[connection_df.bodyId_post .== post_neuron,:].weight)
+	end
+	return weights	
 end
 
 
