@@ -38,7 +38,7 @@ function get_neurons(crit::NeuronType)
 	pd_to_df(out_pandas)
 end
 
-function get_neurons(crits::Vector{AbstractCriteria})
+function get_neurons(crits::AbstractArray)
 
 	criteria = []
 	for crit in crits
@@ -64,9 +64,10 @@ end
 function convert_column(column)
 
 	coltype = julia_equivalent(column.dtype)
+	isnothing(coltype) && @infiltrate
 	out = Vector{coltype}(undef, length(column)) # bad practise, but assume that the type is the same for the whole column.
 	for i = 1:length(column)
-		out[i] = convert(coltype, column.iloc[i])
+		out[i] = isnothing(column.iloc[i]) ? none_equivalent(coltype) : convert(coltype, column.iloc[i])
 	end
 	return out
 end
@@ -101,12 +102,21 @@ function julia_equivalent(pytype)
 
 	if pytype == pybuiltin(:int)
 		return Int
+	elseif contains(pytype.name, "int")
+		return Int
+	elseif contains(pytype.name, "float")
+		return Float64
 	elseif pytype == pybuiltin(:object)
 		return String
 	elseif pytype == pybuiltin(:float)
 		return Float64
 	end
 end
+
+none_equivalent(s::Type{String}) = ""
+none_equivalent(i::Type{Int}) = zero(i)
+none_equivalent(f::Type{Float64}) = zero(f)
+
 
 function get_ids(df)
 	unique(df.bodyId)

@@ -1,4 +1,4 @@
-from neuprint import Client, NeuronCriteria, fetch_neurons, fetch_adjacencies, merge_neuron_properties
+from neuprint import Client, NeuronCriteria, fetch_neurons, fetch_adjacencies, merge_neuron_properties, fetch_synapse_connections
 import pandas as pd
 import numpy as np
 import json
@@ -46,3 +46,10 @@ def get_downstream(bodyIds):
 	conn_df = merge_neuron_properties(neuron_df, conn_df, ['type', 'instance'])
 	conn_df.replace(to_replace=[None], value="Unknown", inplace=True)
 	return conn_df
+
+def synapse_connections(bodyIds):
+	eb_conns = fetch_synapse_connections(bodyIds) # try NC(bodyId=bodyIds) if that doesn't work
+	return eb_conns
+
+
+## TODO: Save all of these as csvs so we don't have to worry about using very laggy PyCall.
