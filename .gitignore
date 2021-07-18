@@ -1,3 +1,5 @@
 src/credentials.txt
 src/credentials.json
 src/*.mp4
+src/Output/*
+src/saved_data/*

@@ -79,10 +79,14 @@ function get_skeletons(ids)
 	for id in ids
 		print('\r')
 		print("Fetching Skeleton:   ", id)
+		try
 		df = pd_to_df(NEU.CLIENT.fetch_skeleton(id, format="pandas"))
 		df = df[:, 2:end]
 		df.bodyId = id
 		out = vcat(out, df)
+		catch
+		end
+
 	end
 
 	return out

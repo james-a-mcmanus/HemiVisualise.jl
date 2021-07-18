@@ -1,4 +1,4 @@
-from neuprint import Client, NeuronCriteria, fetch_neurons, fetch_adjacencies, merge_neuron_properties, fetch_synapse_connections
+from neuprint import Client, NeuronCriteria, fetch_neurons, fetch_adjacencies, merge_neuron_properties, fetch_synapse_connections, fetch_skeleton
 import pandas as pd
 import numpy as np
 import json
@@ -19,7 +19,7 @@ def get_skeletons(bodyIds):
 	for i, bodyId in enumerate(bodyIds):
 		print(i)
 		try:
-			s = c.fetch_skeleton(bodyId, format='pandas')
+			s = fetch_skeleton(bodyId, format='pandas')
 			s['bodyId'] = bodyId
 			#s['color'] = bokeh.palettes.Accent[5][i]
 			skeletons.append(s)
@@ -47,9 +47,12 @@ def get_downstream(bodyIds):
 	conn_df.replace(to_replace=[None], value="Unknown", inplace=True)
 	return conn_df
 
-def synapse_connections(bodyIds):
+def presynaptic_connections(bodyIds):
 	eb_conns = fetch_synapse_connections(bodyIds) # try NC(bodyId=bodyIds) if that doesn't work
 	return eb_conns
 
+def postsynaptic_connections(bodyIds):
+	eb_conns = fetch_synapse_connections(None, bodyIds) # try NC(bodyId=bodyIds) if that doesn't work
+	return eb_conns	
 
 ## TODO: Save all of these as csvs so we don't have to worry about using very laggy PyCall.

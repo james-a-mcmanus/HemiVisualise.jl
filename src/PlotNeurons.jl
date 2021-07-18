@@ -18,6 +18,24 @@ function plot_furthest_terminals(df::DataFrame, ids)
 	AbstractPlotting.scatter!(xs, ys, zs, markersize=300_000, color=HSLA(269, .96, .56, 1), shininess=0f0, strokewidth=0, transparency=true)
 end
 
+
+function furthest_terminals(df::DataFrame, ids)
+
+	
+	xs = Vector{Float64}(undef, length(ids))
+	ys = similar(xs)
+	zs = similar(xs)
+
+
+	for (i,id) in enumerate(ids)
+		x, y, z = terminal_locations(get_neuron(df, id))		
+		id = furthest_terminal(x,y,z, median(x), median(y), median(z))
+		xs[i], ys[i], zs[i] = x[id], y[id], z[id]
+	end
+	return xs, ys, zs
+end
+
+
 function plot_terminals(df::DataFrame, ids)
 	s = Scene()
 	for id in ids
@@ -131,6 +149,23 @@ function plot_retinotopicity(sk, ids)
 	return p
 end
 
+function retinotopicity_neighboursizes(input_locations, output_locations; max_neighbours=60)
+
+	rand_locations() = rand(Point{3,Float64}, max_neighbours)
+
+	random_results = Vector{Int}(undef, max_neighbours)
+	actual_results = Vector{Int}(undef, max_neighbours)
+	perfect_results = Vector{Int}(undef, max_neighbours)
+
+	for i = 1:max_neighbours
+		random_results[i] = sum(calculate_retinotopicity(rand_locations(), rand_locations(), breadth=i))
+		actual_results[i] = sum(calculate_retinotopicity(input_locations, output_locations, breadth=i))
+		perfect_results[i] = sum(calculate_retinotopicity(input_locations, input_locations, breadth=i))
+	end
+
+	return (random_results, actual_results, perfect_results)
+end
+
 
 function plot_arrows!()
 
@@ -170,7 +205,7 @@ end
 """
 Neuron Analysis
 """
-
+# TODO: explain how this works because i've forgotten.
 function to_segments(x,y,z,links)
     
     segments = Vector{Pair{Point{3,Float64},Point{3,Float64}}}(undef,length(links));
@@ -232,6 +267,7 @@ end
 
 distance(p1::Point{2,<:Real}, p2::Point{2,<:Real}) = sqrt.( (p1[1] - p2[1])^2 + (p1[2] - p1[2])^2 )
 distance(p1::Point{3,<:Real}, p2::Point{3,<:Real}) = sqrt.( (p1[1] - p2[1])^2 + (p1[2] - p1[2])^2 + (p1[3] - p2[3])^2 )
+distance(p1::NTuple{3,<:Real}, p2::NTuple{3,<:Real}) = sqrt.( (p1[1] - p2[1])^2 + (p1[2] - p1[2])^2 + (p1[3] - p2[3])^2 )
 
 
 function median_furthest_points(df::DataFrame, ids)
@@ -250,6 +286,27 @@ function median_furthest_points(df::DataFrame, ids)
 
 	return furthest_points, median_points
 end
+
+function furthest_points(skeletons::DataFrame, ids, furthest_from)
+
+	out = fill((0.,0.,0.,), length(ids))
+
+	for (i, id) in enumerate(ids)
+		
+		from = furthest_from[i]
+		neuron_skeleton = get_neuron(skeletons, id)
+		x,y,z,_ = xyz_links(neuron_skeleton)
+		@infiltrate
+		x_from = from[1]; 
+		y_from = from[2]; 
+		z_from = from[3] 
+		row = furthest_terminal(x,y,z, x_from, y_from, z_from)
+		out[i] = (x[row], y[row], z[row])
+	end
+	return out
+
+end
+
 
 
 get_dimensions_geo(point_array, dims) = [GeometricalPredicates.Point(p[dims]...) for p in point_array]
@@ -555,4 +612,42 @@ function weight_transparency(pre_ids, all_ids, df)
 	for i in 1:length(unique_up)
 	   colors[i] = HSLA(236, .08, .23, normalised_weights[i])
 	end
+end
+
+function centroid(id, synapse_locations; average=mean)
+    x = synapse_locations[synapse_locations["bodyId_post"] .== id, :].x_post
+    y = synapse_locations[synapse_locations["bodyId_post"] .== id, :].y_post
+    z = synapse_locations[synapse_locations["bodyId_post"] .== id, :].z_post
+
+    if isempty(x)
+    	return (0., 0., 0.)
+    elseif length(x) == 1
+    	return (float(x[]),float(y[]),float(z[]))
+    else
+	    return (float(average(x)), float(average(y)), float(average(z)))
+	end
+end
+
+
+function centroids(ids, synapse_locations; average=mean)
+
+	out = fill((0.,0.,0.,), length(ids))
+	for (i,id) in enumerate(ids)
+		out[i] = centroid(id, synapse_locations, average=average)
+	end
+	return out
+end
+
+function plot_neuron_and_partner(skeletons, connections, id)
+
+	scene = plot_neurons(skeletons, id, color=RGBA(.1,0.1,0.9,0.2))
+	plot_neurons!(scene, skeletons, connections.bodyId_pre[connections.bodyId_post .== id], RGBA(.8,.1,.1,.3))
+	return scene
+end
+
+function plot_neuron_and_partner!(scene, skeletons, connections, id)
+
+	plot_neurons!(scene, skeletons, id, RGBA(.1,0.1,0.9,0.2))
+	plot_neurons!(scene, skeletons, connections.bodyId_pre[connections.bodyId_post .== id], RGBA(.8,.1,.1,.3))
+	return scene
 end
