@@ -296,7 +296,6 @@ function furthest_points(skeletons::DataFrame, ids, furthest_from)
 		from = furthest_from[i]
 		neuron_skeleton = get_neuron(skeletons, id)
 		x,y,z,_ = xyz_links(neuron_skeleton)
-		@infiltrate
 		x_from = from[1]; 
 		y_from = from[2]; 
 		z_from = from[3] 
@@ -402,11 +401,8 @@ function k_means(x,y, num_classes)
 		for i in 1:num_classes
 			distances[:,i] .= distance_between(data_points, centres[i])
 		end
-		#@infiltrate
 		argmin_rows!(classes, distances)
-		#@infiltrate
 		find_centre_vectors!(centres, centre_vectors, num_classes, classes, data_points)
-		#@infiltrate
 		centres .= centres .+ centre_vectors
 		j += 1
 	end
@@ -420,7 +416,6 @@ Helper Functions
 """
 function find_centre_vectors!(centres, centre_vectors, num_classes, classes, data_points)
 
-	#@infiltrate
 	for i = 1:num_classes
 		centre_vectors[i] = mean(find_difference(centres[i], data_points[classes .== i]))
 	end

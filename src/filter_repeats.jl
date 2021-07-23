@@ -12,7 +12,6 @@ function collapse_duplicates(connection_df)
 		post_matches =  connection_df.bodyId_post .== unique_connections[connection,2]
 		matching_rows = pre_matches .& post_matches
 		weights[connection] = sum(connection_df[matching_rows,:].weight)
-		@infiltrate
 		celltype[connection] = choose_type(connection_df[matching_rows,:].type_pre)
 	end
 	return DataFrame(bodyId_pre=unique_connections[:,1], bodyId_post=unique_connections[:,2], weights=weights, type_pre=celltype)
