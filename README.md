@@ -16,4 +16,4 @@ julia> cell_df = neuron_ids("KCg-d")
 julia> skeletons = get_skeletons(unique(cell_df.bodyId))
 julia> scene = plot_neurons(skeletons, color=RGBA(0,0,0,.2))
 ```
-<video src='https://raw.githubusercontent.com/james-a-mcmanus/HemiVisualise.jl/master/Demo.mp4' />
+![](https://github.com/james-a-mcmanus/HemiVisualise.jl/blob/master/ReadmeKC.png?raw=true)
