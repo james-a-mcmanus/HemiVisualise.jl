@@ -17,4 +17,4 @@ julia> skeletons = get_skeletons(unique(cell_df.bodyId))
 julia> scene = plot_neurons(skeletons, color=RGBA(0,0,0,.2))
 ```
 
-
+https://github.com/james-a-mcmanus/HemiVisualise.jl/blob/master/Demo.mp4
