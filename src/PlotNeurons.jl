@@ -161,10 +161,10 @@ function save_spinning_camera(s, time_seconds, fname)
 	s.center = false
 	spinning_time = [1:time_seconds;]
 
-	rotate_cam!(s, (0.0,0.0,0.0))
+	rotate_cam!(s, (0.0,0.0,0.))
 	record(s,fname, 1:time_seconds; framerate=30) do i
-       rotate_cam!(s, (2π)/time_seconds, 0.,  0.)
-       #update_cam!(s) # disabling stops the camera reset.
+       rotate_cam!(s, 0.,(2π)/time_seconds, 0.)
+       update_cam!(s) # disabling stops the camera reset.
    end
 end
 
