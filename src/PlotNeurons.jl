@@ -1,71 +1,13 @@
+using LinearAlgebra
 
 """
-Plots of various kinds.
-"""
-function plot_furthest_terminals(df::DataFrame, ids)
-
-	
-	xs = Vector{Float64}(undef, length(ids))
-	ys = similar(xs)
-	zs = similar(xs)
-
-
-	for (i,id) in enumerate(ids)
-		x, y, z = terminal_locations(get_neuron(df, id))		
-		id = furthest_terminal(x,y,z, median(x), median(y), median(z))
-		xs[i], ys[i], zs[i] = x[id], y[id], z[id]
-	end
-	AbstractPlotting.scatter!(xs, ys, zs, markersize=300_000, color=HSLA(269, .96, .56, 1), shininess=0f0, strokewidth=0, transparency=true)
-end
-
-
-function furthest_terminals(df::DataFrame, ids)
-
-	
-	xs = Vector{Float64}(undef, length(ids))
-	ys = similar(xs)
-	zs = similar(xs)
-
-
-	for (i,id) in enumerate(ids)
-		x, y, z = terminal_locations(get_neuron(df, id))		
-		id = furthest_terminal(x,y,z, median(x), median(y), median(z))
-		xs[i], ys[i], zs[i] = x[id], y[id], z[id]
-	end
-	return xs, ys, zs
-end
-
-
-function plot_terminals(df::DataFrame, ids)
-	s = Scene()
-	for id in ids
-		x, y, z = terminal_locations(get_neuron(df, id))
-		AbstractPlotting.scatter!(x, y, z, markersize=50)
-	end
-	return s
-end
-
-function plot_median_terminals(df::DataFrame, ids)
-	
-	xs = Vector{Float64}(undef, length(ids))
-	ys = similar(xs)
-	zs = similar(xs)
-
-	for (i,id) in enumerate(ids)
-		x,y,z = terminal_locations(get_neuron(df, id))
-		xs[i] = median(x)
-		ys[i] = median(y)
-		zs[i] = median(z)
-	end
-
-	scatter!(xs, ys, zs, markersize=200)
-end
-
-
-
-
-"""
-Plot Neuron Skeletons
+plot_neurons(skeletons)
+Plot the skeleton models of neurons.
+Examples
+========
+julia> ids = fetch_neurons(NeuronType("APL"))
+julia> skeletons = fetch_skeletons(ids)
+julia> scene = plot_neurons(skeletons)
 """
 function plot_neurons(skeletons; color=RGB(0f0, 0f0, 0f0))
 	ids = unique(skeletons.bodyId)
@@ -78,19 +20,28 @@ function plot_neurons(skeletons, ids; color=RGB(0f0, 0f0, 0f0))
 end
 function plot_neurons!(scene, skeletons, ids, color::Vector{<:Colorant})
 	for (i, id) in enumerate(ids)
-		linesegments!(scene, to_segments(get_neuron(skeletons, id)), color=color[i], linewidth=2, transparency=true, shininess=0f0)
+		linesegments!(scene, to_segments(get_neuron(skeletons, id)), color=color[i], linewidth=4, transparency=true, shininess=0f0)
 	end
 	return scene
+end
+
+function plot_neurons!(scene::Makie.Scene, skeletons; color=RGB(0f0, 0f0, 0f0))
+	ids = unique(skeletons.bodyId)
+	plot_neurons!(scene, skeletons, ids, color)
 end
 function plot_neurons!(scene, skeletons, ids, color::Colorant)
 
 	for (i, id) in enumerate(ids)
-		linesegments!(scene, to_segments(get_neuron(skeletons, id)), color=color, linewidth=2, transparency=true, shininess=0f0)
+		linesegments!(scene, to_segments(get_neuron(skeletons, id)), color=color, linewidth=1, transparency=true, shininess=0f0)
 	end
 	return scene
 end
 
 
+"""
+plot_upstream(connections, skeletons)
+Plots just the input neurons for a given set of connections.
+"""
 function plot_upstream(connection_df, skeletons; base_color=RGB(.2,.2,.2))
 
 	scene = Scene(show_axis=false)
@@ -112,6 +63,10 @@ function plot_upstream!(scene, connection_df, skeletons; base_color=RGB(.2,.2,.2
 end
 
 
+"""
+plot_downstream(connections, skeletons)
+Plots just the output neurons for a given set of connections.
+"""
 function plot_downstream(connection_df, skeletons; base_color=RGB(.2, .2, .2))
 	scene = Scene(show_axis=false)
 	plot_downstream!(scene, connection_df, skeletons, base_color=base_color)
@@ -130,6 +85,7 @@ function plot_downstream!(scene, connection_df, skeletons; base_color=RGB(.2,.2,
 	plot_neurons!(scene, skeletons, downstream_ids, colors)
 	return scene
 end
+
 
 
 function plot_retinotopicity(sk, ids)
@@ -169,15 +125,27 @@ end
 
 function plot_arrows!()
 
-	arrows!([0],[0],[0],[10_000],[0],[0], linewidth=2, arrowsize=1000, arrowcolor=:blue, linecolor=:blue)
-	arrows!([0],[0],[0],[0],[10_000],[0], linewidth=2, arrowsize=1000, arrowcolor=:red, linecolor=:red)
-	arrows!([0],[0],[0],[0],[0],[-10_000], linewidth=2, arrowsize=1000, arrowcolor=:green, linecolor=:green)
+	arrows!([0],[0],[0],[10_000],[0],[0], linewidth=400, arrowsize=1000, arrowcolor=:blue, linecolor=:blue)
+	arrows!([0],[0],[0],[0],[10_000],[0], linewidth=400, arrowsize=1000, arrowcolor=:red, linecolor=:red)
+	arrows!([0],[0],[0],[0],[0],[-10_000], linewidth=400, arrowsize=1000, arrowcolor=:green, linecolor=:green)
 	#text!("Anterior",textsize = 1000.0, position = (1000, 5000, 0), color=:red)
 	#text!("Ventral",textsize = 1000.0, position = (1000, 0, -5000), color=:green)
 	#text!("Medial",textsize = 1000.0, position = (1000, 1000, 0), color=:blue)
 end
 
+function plot_arrows!(s)
 
+	arrows!(s, [0],[0],[0],[10_000],[0],[0], linewidth=400, arrowsize=1000, arrowcolor=:blue, linecolor=:blue)
+	arrows!(s, [0],[0],[0],[0],[10_000],[0], linewidth=400, arrowsize=1000, arrowcolor=:red, linecolor=:red)
+	arrows!(s, [0],[0],[0],[0],[0],[-10_000], linewidth=400, arrowsize=1000, arrowcolor=:green, linecolor=:green)
+	#text!("Anterior",textsize = 1000.0, position = (1000, 5000, 0), color=:red)
+	#text!("Ventral",textsize = 1000.0, position = (1000, 0, -5000), color=:green)
+	#text!("Medial",textsize = 1000.0, position = (1000, 1000, 0), color=:blue)
+end
+
+"""
+spin the camera for a scene for an amount of seconds.
+"""
 function spinning_camera(s, time_seconds)
 	s.center = false
 	spinning_time = [1:time_seconds;]
@@ -268,6 +236,7 @@ end
 distance(p1::Point{2,<:Real}, p2::Point{2,<:Real}) = sqrt.( (p1[1] - p2[1])^2 + (p1[2] - p1[2])^2 )
 distance(p1::Point{3,<:Real}, p2::Point{3,<:Real}) = sqrt.( (p1[1] - p2[1])^2 + (p1[2] - p1[2])^2 + (p1[3] - p2[3])^2 )
 distance(p1::NTuple{3,<:Real}, p2::NTuple{3,<:Real}) = sqrt.( (p1[1] - p2[1])^2 + (p1[2] - p1[2])^2 + (p1[3] - p2[3])^2 )
+distance(p1, p2) = LinearAlgebra.norm(p1.-p2)
 
 
 function median_furthest_points(df::DataFrame, ids)
@@ -326,12 +295,14 @@ function nearest_neighbours(points, n)
 end
 function nearest_neighbour(point, other_points, n)
 
-	nearest_ids = Vector{Int}(undef, n)
+	nearest_ids = zeros(Int, n)
 	distances = Inf .* ones(n)
+	isempty(point) && return (nearest_ids, distances)
 	
 	for (i,p) in enumerate(other_points)
 		
 		max_d, max_i = findmax(distances)
+		isempty(p) && continue
 		d = distance(point, p)
 		
 		if d < max_d
@@ -340,7 +311,8 @@ function nearest_neighbour(point, other_points, n)
 		end
 
 	end
-	return nearest_ids, distances
+	dist_order = sortperm(distances)
+	return nearest_ids[dist_order], distances[dist_order]
 end
 
 
@@ -380,6 +352,13 @@ function calculate_retinotopicity(furthest_points, median_points; breadth=5)
 	return common_neighbours(furthest_neighbours, median_neighours)
 end
 
+function slice_skeletons(sk, ax, step)
+
+end
+
+function find_intersection(plane, line)
+	
+end
 
 """
 k_means: some stats stuff that isn't that useful tbh.
@@ -609,11 +588,10 @@ function weight_transparency(pre_ids, all_ids, df)
 	end
 end
 
-function centroid(id, synapse_locations; average=mean)
-    x = synapse_locations[synapse_locations["bodyId_post"] .== id, :].x_post
-    y = synapse_locations[synapse_locations["bodyId_post"] .== id, :].y_post
-    z = synapse_locations[synapse_locations["bodyId_post"] .== id, :].z_post
-
+function centroid(synapse_locations, id; average=median)
+    
+	id_synapses = filter(:bodyId => isequal(id), synapse_locations)
+	x,y,z = id_synapses.x, id_synapses.y, id_synapses.z 
     if isempty(x)
     	return (0., 0., 0.)
     elseif length(x) == 1
@@ -646,3 +624,94 @@ function plot_neuron_and_partner!(scene, skeletons, connections, id)
 	plot_neurons!(scene, skeletons, connections.bodyId_pre[connections.bodyId_post .== id], RGBA(.8,.1,.1,.3))
 	return scene
 end
+
+"""
+Plots of various kinds.
+"""
+function plot_furthest_terminals(df::DataFrame, ids)
+
+	xs = Vector{Float64}(undef, length(ids))
+	ys = similar(xs)
+	zs = similar(xs)
+
+
+	for (i,id) in enumerate(ids)
+		x, y, z = terminal_locations(get_neuron(df, id))		
+		id = furthest_terminal(x,y,z, median(x), median(y), median(z))
+		xs[i], ys[i], zs[i] = x[id], y[id], z[id]
+	end
+	AbstractPlotting.scatter!(xs, ys, zs, markersize=300_000, color=HSLA(269, .96, .56, 1), shininess=0f0, strokewidth=0, transparency=true)
+end
+
+
+function furthest_terminals(df::DataFrame, ids)
+
+	
+	xs = Vector{Float64}(undef, length(ids))
+	ys = similar(xs)
+	zs = similar(xs)
+
+
+	for (i,id) in enumerate(ids)
+		x, y, z = terminal_locations(get_neuron(df, id))		
+		id = furthest_terminal(x,y,z, median(x), median(y), median(z))
+		xs[i], ys[i], zs[i] = x[id], y[id], z[id]
+	end
+	return xs, ys, zs
+end
+
+
+function plot_terminals(df::DataFrame, ids)
+	s = Scene()
+	for id in ids
+		x, y, z = terminal_locations(get_neuron(df, id))
+		AbstractPlotting.scatter!(x, y, z, markersize=50)
+	end
+	return s
+end
+
+function plot_median_terminals(df::DataFrame, ids)
+	
+	xs = Vector{Float64}(undef, length(ids))
+	ys = similar(xs)
+	zs = similar(xs)
+
+	for (i,id) in enumerate(ids)
+		x,y,z = terminal_locations(get_neuron(df, id))
+		xs[i] = median(x)
+		ys[i] = median(y)
+		zs[i] = median(z)
+	end
+
+	scatter!(xs, ys, zs, markersize=200)
+end
+
+
+function roi_labels(points, roi_volume; scale=5) # assumes points in x,y,z format.	
+	"""	
+    1. get borders of volume (basically size).
+    2. downsample points, (points ./ 2^scale), convert to int32
+    3. remove points outside of volume.
+    4. labels = volume[x,y,z]
+	"""
+	lx, ly, lz = size(roi_volume)
+	down_points = round.(Int, points ./ 2^scale)
+	x, y, z = view(down_points, :, 1), view(down_points, :, 2), view(down_points, :, 3)
+	in_limit_idx = (0 .<= x .< lx) .& (0 .<= y .< ly) .& (0 .<= z .< lz)
+	vx, vy, vz = x[in_limit_idx], y[in_limit_idx], z[in_limit_idx]
+	labels = map(i-> roi_volume[i...], zip(vx,vy,vz))
+	return labels
+end
+function roi_labels(points, roi_volume, label_key; scale=5)
+	labels = roi_labels(points, roi_volume, scale=scale)
+	return _roi_label_index(label_key, labels)
+end
+function roi_labels(df::AbstractDataFrame, args...; scale=5) 
+	roi_labels(hcat(df.x,df.y,df.z), args..., scale=scale)
+end
+
+_roi_label_index(label_key, labels) = label_key[_py2ju_ind.(labels)]
+_roi_label_index(vol_file::HDF5.File, labels) = read(vol_file["primary-roi-names"])[_py2ju_ind.(labels)]
+
+_py2ju_ind(i) = i+1
+_ju2py_ind(i) = i-1

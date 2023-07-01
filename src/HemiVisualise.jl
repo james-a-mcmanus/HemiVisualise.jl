@@ -4,18 +4,17 @@ module HemiVisualise
 export 
 	CellType, InputROI, OutputROI, BodyROI, StringID, IntID, ArrayID,
 	neuprint,
-	neuron_ids, criterion, get_skeletons, upstream_neurons, downstream_neurons,
+	neuron_ids, criterion, get_skeletons, get_synapses, upstream_neurons, downstream_neurons,
 	plot_neurons, plot_neurons!, plot_upstream, plot_upstream!, plot_downstream, plot_downstream!,
 	spinning_camera, save_spinning_camera
 
 
-using CSV, DataFrames, PyCall, Colors, Makie, GLMakie, JSON, Crayons
+using CSV, DataFrames, PyCall, Colors, GLMakie, JSON, Crayons, HDF5
 
 neuprint() = pyimport("neuprint")
 
 function welcome()
 	println("Welcome to HemiVisualise!")
-	print_hemibrain()
 	token, was_saved = get_token()
 	set_client(token)
 	!was_saved && save_creds(token)
@@ -30,7 +29,7 @@ function print_hemibrain()
 end
 
 function set_client(neuprint, token::AbstractString)
-	return neuprint.Client("neuprint.janelia.org", dataset="hemibrain:v1.1", token=token)
+	return neuprint.Client("neuprint.janelia.org", dataset="hemibrain:v1.2.1", token=token)
 end
 set_client(token::AbstractString) = set_client(neuprint(), token)
 
@@ -40,6 +39,7 @@ function get_token()
 	if has_creds
 		tok = JSON.parsefile(creds)["TOKEN"]
 	else
+		print_hemibrain()
 		println("\n\nSet up a TOKEN?\nToken: ")
 		tok = readline()
 	end
@@ -59,5 +59,6 @@ end
 ## TODO ## 
 - [x] Save credentials on startup
 - [ ] Save ids (skeletons done)
-- [ ] More full intuitive criteria 
+- [ ] More full intuitive criteria
+- [ ] implement Missing for dfs. 
 """

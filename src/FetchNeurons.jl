@@ -1,5 +1,5 @@
 import HemiVisualise: neuprint
-
+using Infiltrator
 abstract type AbstractCriteria end
 abstract type AbstractROI <: AbstractCriteria end
 abstract type AbstractID <: AbstractCriteria end
@@ -32,21 +32,15 @@ struct ArrayId <: AbstractID
 end
 
 """
-Fetch a dataframe containing the neuron IDs, + the ROI for some given criteria.
+Fetch a dataframe 	ntaining the neuron IDs, + the ROI for some given criteria.
 """
 function neuron_ids(neuprint::PyCall.PyObject, crit)
 	_, neurons = neuprint.fetch_neurons(criterion(neuprint, crit))
 	return pd_to_df(neurons)
 end
 neuron_ids(crit) = neuron_ids(neuprint(), crit)
-function neuron_ids(crits::AbstractArray)
 
-	criteria = []
-	for crit in crits
-		push!(criteria, criterion(crit))
-	end
-	neuron_ids(criteria...)
-end
+bodyids(neurons::DataFrame) = unique(neurons.bodyId)
 
 """
 handles conversion from python pandas to julia Dataframe
@@ -83,6 +77,8 @@ function julia_equivalent(pytype)
 		return Int
 	elseif contains(pytype.name, "float")
 		return Float64
+	elseif contains(pytype.name, "category")
+		return String
 	elseif pytype == pybuiltin(:object)
 		return String
 	elseif pytype == pybuiltin(:float)
@@ -106,6 +102,8 @@ criterion(neuprint::PyCall.PyObject, c::CellType) = neuprint.NeuronCriteria(type
 criterion(neuprint::PyCall.PyObject, c::IntId) = neuprint.NeuronCriteria(bodyId=c.name)
 criterion(neuprint::PyCall.PyObject, c::String) = neuprint.NeuronCriteria(type=c)
 criterion(neuprint::PyCall.PyObject, c::Int) = neuprint.NeuronCriteria(bodyId=c)
+criterion(neuprint::PyCall.PyObject, c::Vector{Int}) = neuprint.NeuronCriteria(bodyId=c)
+criterion(neuprint::PyCall.PyObject, c::BodyROI) = neuprint.NeuronCriteria(rois=c.name)
 function criterion(c)
 	criterion(neuprint(), c)
 end
@@ -136,15 +134,37 @@ function get_skeletons(neu, id)
 	was_saved = check_saved_skeleton(id) && return get_saved_skeleton(id)
 	df = pd_to_df(neu.default_client().fetch_skeleton(id, format="pandas"))
 	df = df[:, 2:end]
-	df.bodyId = id
+	df.bodyId .= id
 	save_skeleton(id, df)
 	return df
 end
+
+"""
+get_synapses: Get the synapsess for a given criteria.
+"""
+get_synapses(neu::PyCall.PyObject, nc, ec) = neu.fetch_synapses(nc, ec)
+function get_synapses(nc, ec)
+	n = neuprint()
+	get_synapses(n, criterion(n, nc), criterion(n, ec))
+end
+function get_synapses(nc)
+	n = neuprint()
+	get_synapses(n, criterion(n, nc), nothing)
+end
+function get_synapses(crits::AbstractArray)
+	criteria = []
+	for crit in crits
+		push!(criteria, criterion(crit))
+	end
+	get_synapses(criteria...)
+end
+
 
 
 """
 Get the neurons upstream of (has presynapse with) a given neuron(s)
 """
+upstream_neurons(id_list) = upstream_neurons(neuprint(), id_list)
 function upstream_neurons(neuprint::PyCall.PyObject, id_list)
 	neuron_df, conn_df = neuprint.fetch_adjacencies(nothing, id_list)
 	conn_df = neuprint.merge_neuron_properties(neuron_df, conn_df, ["type", "instance"])
@@ -156,8 +176,12 @@ end
 """
 Get the neurons downstream of (has postsynapse with) a given neuron(s)
 """
+downstream_neurons(id_list) = downstream_neurons(neuprint(), id_list)
 function downstream_neurons(neuprint::PyCall.PyObject, id_list)
-	conn_df = neuprint.get_downstream(id_list)
+	
+	neuron_df, conn_df = neuprint.fetch_adjacencies(id_list, nothing)
+	conn_df = neuprint.merge_neuron_properties(neuron_df, conn_df, ["type", "instance"])
+	conn_df.replace(to_replace=[nothing], value="Unknown", inplace=true)
 	return pd_to_df(conn_df)
 end
 
